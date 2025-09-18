@@ -1,0 +1,34 @@
+/*
+ * Astrotheme for Waybar
+ */
+
+/* ===== Base Colors ===== */
+@define-color background #1A1D23;
+@define-color foreground #9B9FA9;
+
+/* ===== Normal Colors ===== */
+@define-color black #111317;
+@define-color red #FF838B;
+@define-color green #87C05F;
+@define-color yellow #DFAB25;
+@define-color blue #5EB7FF;
+@define-color magenta #DD97F1;
+@define-color cyan #4AC2B8;
+@define-color white #9B9FA9;
+
+/* ===== Bright Colors ===== */
+@define-color bright-black #34363A;
+@define-color bright-red #FFA6AE;
+@define-color bright-green #AAE382;
+@define-color bright-yellow #FFCE48;
+@define-color bright-blue #81DAFF;
+@define-color bright-magenta #FFBAFF;
+@define-color bright-cyan #6DE5DB;
+@define-color bright-white #D0D3DE;
+
+/* ===== UI Specific ===== */
+@define-color selection_bg @bright-black;
+@define-color selection_fg @bright-white;
+@define-color warning @yellow;
+@define-color critical @red;
+@define-color success @green;
