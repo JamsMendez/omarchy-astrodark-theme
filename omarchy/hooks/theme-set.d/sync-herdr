@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Apply the active Omarchy theme's colors to herdr (https://herdr.dev).
+#
+# Omarchy does not theme herdr on its own: it seeds a static config that rides
+# on the terminal's ANSI palette, so herdr's sidebar, panels, and agent status
+# colors never follow the theme. This hook closes that gap.
+#
+# herdr keeps keybindings and UI settings in the same file as its colors, so
+# the config is rewritten in place. The generated block is fenced by markers
+# and only that fence is replaced, leaving every other setting untouched.
+
+set -euo pipefail
+
+GENERATED="$HOME/.local/state/omarchy/current/theme/herdr.toml"
+CONFIG="$HOME/.config/herdr/config.toml"
+BEGIN_MARKER="# >>> omarchy theme colors"
+END_MARKER="# <<< omarchy theme colors"
+
+command -v herdr >/dev/null 2>&1 || exit 0
+[[ -f $GENERATED && -f $CONFIG ]] || exit 0
+
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+
+# Strip a previously generated fence, plus any hand-written [theme] tables left
+# over from the stock config. A TOML table runs until the next table header, so
+# one "am I inside a theme table" flag is enough to drop it.
+awk -v begin_marker="$BEGIN_MARKER" -v end_marker="$END_MARKER" '
+  index($0, begin_marker) == 1 { in_fence = 1; next }
+  in_fence { if (index($0, end_marker) == 1) in_fence = 0; next }
+
+  /^[[:space:]]*\[/ {
+    in_theme = ($0 ~ /^[[:space:]]*\[theme(\.[A-Za-z0-9_-]+)*\][[:space:]]*($|#)/)
+  }
+  !in_theme { print }
+' "$CONFIG" >"$tmp"
+
+# Collapse trailing blank lines so repeated theme switches cannot grow the file.
+printf '%s\n\n' "$(<"$tmp")" >"$tmp.trim" && mv "$tmp.trim" "$tmp"
+cat "$GENERATED" >>"$tmp"
+
+# [ui] accent sets the same highlight color as theme.custom.accent but lives
+# outside the fence. Omarchy seeds it with the ANSI name "blue", which resolves
+# to the terminal palette and would override the themed accent. Neutralize only
+# that seeded value; a hex the user chose themselves is left alone.
+sed -i -E 's|^([[:space:]]*)accent[[:space:]]*=[[:space:]]*"blue"|\1# accent = "blue"  # disabled: themed by [theme.custom].accent|' "$tmp"
+
+# Swap in only after the rewrite succeeded, so an interrupted run can never
+# leave herdr without a config.
+cp "$tmp" "$CONFIG"
+
+# Retint a running server. Colors are hot-reloadable, so this needs no restart
+# and is a no-op when no server is running.
+herdr server reload-config >/dev/null 2>&1 || true
