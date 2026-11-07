@@ -2,9 +2,10 @@
 
 # Apply the active Omarchy theme's colors to herdr (https://herdr.dev).
 #
-# Omarchy does not theme herdr on its own: it seeds a static config that rides
-# on the terminal's ANSI palette, so herdr's sidebar, panels, and agent status
-# colors never follow the theme. This hook closes that gap.
+# Omarchy themes the Herdr desktop app, but the terminal herdr client still uses
+# a static config that rides on the terminal's ANSI palette, so its sidebar,
+# panels, and agent status colors never follow the theme. This hook closes that
+# gap.
 #
 # herdr keeps keybindings and UI settings in the same file as its colors, so
 # the config is rewritten in place. The generated block is fenced by markers
@@ -39,6 +40,14 @@ awk -v begin_marker="$BEGIN_MARKER" -v end_marker="$END_MARKER" '
 # Collapse trailing blank lines so repeated theme switches cannot grow the file.
 printf '%s\n\n' "$(<"$tmp")" >"$tmp.trim" && mv "$tmp.trim" "$tmp"
 cat "$GENERATED" >>"$tmp"
+
+# Under Glassy windows Omarchy's stock herdr config sets panel_bg = "reset" so
+# the tab bar shows the terminal's see-through background. Keep that behavior
+# instead of painting the bar with an opaque theme color.
+GLASSY_TOGGLE="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/toggles/hypr/window-glassy.lua"
+if [[ -f $GLASSY_TOGGLE ]]; then
+  sed -i -E 's|^panel_bg[[:space:]]*=.*|panel_bg = "reset"|' "$tmp"
+fi
 
 # [ui] accent sets the same highlight color as theme.custom.accent but lives
 # outside the fence. Omarchy seeds it with the ANSI name "blue", which resolves

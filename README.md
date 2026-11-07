@@ -20,18 +20,28 @@ omarchy theme install https://github.com/JamsMendez/omarchy-astrodark-theme
 
 ## Notes
 
-Omarchy 4 generates `btop.theme`, `alacritty.toml`, `ghostty.conf`, `hyprland.lua`,
-`keyboard.rgb`, `chromium.theme`, and the shell surface colors from `colors.toml`
-using the templates in `/usr/share/omarchy/default/themed/`. Only the source
-colors and the app-specific selections live here.
+Omarchy generates every app theme from `colors.toml` using the templates in `/usr/share/omarchy/default/themed/`: terminals, Hyprland, btop, Chromium, GTK, Neovim, VS Code, Helix, the keyboard backlight, the shell, and agent apps. Only the source colors, the backgrounds, the icon theme, and the previews live here.
+
+The cursor color always follows `bright_foreground`; Omarchy has no separate cursor key.
+
+## Neovim
+
+A theme installed with `omarchy theme install` is a git clone, and Omarchy drops every `*.lua` file from it because Neovim and Hyprland would execute it. Omarchy then generates Neovim colors from `colors.toml` through `aether.nvim`.
+
+To use the original AstroNvim `astrodark` colorscheme instead, add it to your own Neovim config, for example `~/.config/nvim/lua/plugins/astrotheme.lua`:
+
+```lua
+return {
+  { "AstroNvim/astrotheme", name = "astrotheme", priority = 1000 },
+  { "LazyVim/LazyVim", opts = { colorscheme = "astrodark" } },
+}
+```
 
 ## Herdr
 
-Omarchy does not theme [herdr](https://herdr.dev) on its own — it seeds a static
-config that rides on the terminal's ANSI palette, so herdr's sidebar, panels and
-agent status colors never follow the active theme.
+Omarchy themes the Herdr desktop app on its own, but the terminal [herdr](https://herdr.dev) client still runs on a static config that rides on the terminal's ANSI palette, so its sidebar, panels and agent status colors never follow the active theme.
 
-The `omarchy/` directory adds that integration:
+The `omarchy/` directory adds that integration for the terminal client:
 
 | File | Role |
 | --- | --- |
@@ -55,3 +65,5 @@ markers, so keybindings and other herdr settings are preserved. It also comments
 out the seeded `[ui] accent = "blue"`, which would otherwise override the themed
 accent. A running herdr server is retinted via `herdr server reload-config`; no
 restart is needed.
+
+With Glassy windows enabled (Appearance > Window Transparency), the hook keeps `panel_bg = "reset"` so the tab bar stays see-through like Omarchy's stock config. The hook runs on theme switches, so after toggling Glassy run `omarchy-theme-set astrodark` again.
